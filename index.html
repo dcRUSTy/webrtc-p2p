@@ -28,7 +28,7 @@
         "use strict";
         let connectionToPeer;
         const twoMBPayload = "PINGPAYLOAD" + new Array(2000000 - 10).join('A');
-        let peer = new Peer();
+        let peer = new Peer((Math.random()*1000000).toFixed(0));
         peer.on('open', function (id) {
             document.getElementById("peerid").value = id;
             document.getElementById("connectButton").disabled = false;
