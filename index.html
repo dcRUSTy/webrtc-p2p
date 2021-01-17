@@ -1,1 +1,108 @@
-gh-pages
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"
+        integrity="sha384-J7Ybg3DQ3sSsSi3wmvGAxIDOY6+gPmxrUCIPBKuu9CWvvmdOw/WKY20rHWrMRigc"
+        crossorigin="anonymous"></script>
+    <style>
+        body {
+            display: grid;
+            background-color: black;
+            margin-left: 15%;
+            margin-right: 15%;
+            gap: 1%;
+            color: white;
+        }
+
+        button {
+            padding-top: 1%;
+            padding-bottom: 1%;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        "use strict";
+        let connectionToPeer;
+        const twoMBPayload = "PINGPAYLOAD" + new Array(2000000 - 10).join('A');
+        let peer = new Peer();
+        peer.on('open', function (id) {
+            document.getElementById("peerid").value = id;
+            document.getElementById("connectButton").disabled = false;
+        });
+        peer.on('connection', function (conn) {
+            connectionToPeer = conn;
+            console.log(connectionToPeer);
+            onConnect();
+            connectionToPeer.on('close', () => onDisconnect);
+            connectionToPeer.on('error', () => onDisconnect);
+            conn.on('data', receiveMessageFromPeer);
+        });
+        function appendToLogWindow(message) {
+            document.getElementById("chatWindow").value = message + "\n----\n" + document.getElementById("chatWindow").value;
+        }
+
+        function connectTo() {
+            let remotepeerid = document.getElementById("remotepeerid").value;
+            appendToLogWindow("TRYING TO CONNECT");
+            connectionToPeer = peer.connect(remotepeerid);
+            connectionToPeer.on('open', onConnect);
+            connectionToPeer.on('close', onDisconnect);
+            connectionToPeer.on('error', onDisconnect);
+            connectionToPeer.on('data', receiveMessageFromPeer);
+        }
+        let startTime = 0;
+        function receiveMessageFromPeer(data) {
+            if (data.indexOf("PING") === 0) {
+                if (startTime === 0) {
+                    startTime = new Date().getTime() / 1000;
+                    appendToLogWindow("Headers recieved at " + startTime + "ms");
+                } else {
+                    let endTime = new Date().getTime() / 1000;
+                    let speedResult = (2 / (endTime - startTime)).toFixed(2) + " MBPS";
+                    appendToLogWindow("Payload recieved at " + endTime);
+                    appendToLogWindow("Transfer speed From that peer to this Peer is " + speedResult);
+                    connectionToPeer.send("Transfer speed from this Peer to that Peer is " + speedResult);
+                    startTime = 0;
+                }
+            }
+            else {
+                appendToLogWindow(data);
+            }
+        }
+        function startSpeedTest() {
+            connectionToPeer.send("PINGSTART");
+            connectionToPeer.send(twoMBPayload);
+        }
+        function sendTextMessage() {
+            connectionToPeer.send(document.getElementById("textMessageToSend").value);
+        }
+        function onConnect() {
+            appendToLogWindow("CONNECTED");
+            document.getElementById("remotepeerid").value = connectionToPeer.peer;
+            document.getElementById("connectButton").disabled = true;
+            document.getElementById("sendButton").disabled = false;
+            document.getElementById("textMessageSendButton").disabled = false;
+        }
+        function onDisconnect() {
+            appendToLogWindow("CONNECTION LOST");
+            document.getElementById("remotepeerid").value = "";
+            document.getElementById("connectButton").disabled = false;
+            document.getElementById("sendButton").disabled = true;
+            document.getElementById("textMessageSendButton").disabled = true;
+        }
+    </script>
+    Your Peer ID<br><input id="peerid" type="text" /><br>
+    <br>Connect to Peer with ID<br><input id="remotepeerid" type="text" /><br><button id="connectButton"
+        onclick="connectTo()" disabled>Connect to Peer</button><br><br>
+    <button id="sendButton" onclick="startSpeedTest()" disabled>Start Speed Test</button><br>
+    <br>Send message<br><input id="textMessageToSend" type="text" /><br>
+    <button id="textMessageSendButton" onclick="sendTextMessage()" disabled>Send</button><br>
+    <br>Log Window<br><textarea id="chatWindow" rows="10"></textarea>
+
+</body>
+
+</html>
