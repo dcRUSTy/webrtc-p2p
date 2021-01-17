@@ -28,10 +28,12 @@
         "use strict";
         let connectionToPeer;
         const twoMBPayload = "PINGPAYLOAD" + new Array(2000000 - 10).join('A');
-        let peer = new Peer((Math.random()*1000000).toFixed(0));
+        let randomPeerID = '' + (Math.random() * 1000000).toFixed(0);
+        let peer = new Peer(randomPeerID);
         peer.on('open', function (id) {
             document.getElementById("peerid").value = id;
             document.getElementById("connectButton").disabled = false;
+            appendToLogWindow("READY");
         });
         peer.on('connection', function (conn) {
             connectionToPeer = conn;
@@ -74,11 +76,14 @@
             }
         }
         function startSpeedTest() {
+            appendToLogWindow("SPEED TEST STARTED");
             connectionToPeer.send("PINGSTART");
             connectionToPeer.send(twoMBPayload);
+            appendToLogWindow("WAITING FOR RESULTS");
         }
         function sendTextMessage() {
             connectionToPeer.send(document.getElementById("textMessageToSend").value);
+            appendToLogWindow("MESSAGE SENT");
         }
         function onConnect() {
             appendToLogWindow("CONNECTED");
@@ -101,7 +106,7 @@
     <button id="sendButton" onclick="startSpeedTest()" disabled>Start Speed Test</button><br>
     <br>Send message<br><input id="textMessageToSend" type="text" /><br>
     <button id="textMessageSendButton" onclick="sendTextMessage()" disabled>Send</button><br>
-    <br>Log Window<br><textarea id="chatWindow" rows="10"></textarea>
+    <br>Log Window<br><textarea id="chatWindow" rows="10">INITIALIZING</textarea>
 
 </body>
 
