@@ -49,6 +49,14 @@
 
         function connectTo() {
             let remotepeerid = document.getElementById("remotepeerid").value;
+            if (remotepeerid.length === 0) {
+                appendToLogWindow("REMOTE PEER ID CANNOT BE EMPTY");
+                return;
+            }
+            if (document.getElementById("peerid").value === remotepeerid) {
+                appendToLogWindow("PEER ID AND REMOTE PEER ID CANNOT BE SAME");
+                return;
+            }
             appendToLogWindow("TRYING TO CONNECT");
             connectionToPeer = peer.connect(remotepeerid);
             connectionToPeer.on('open', onConnect);
